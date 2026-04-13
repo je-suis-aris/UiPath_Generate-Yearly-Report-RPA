@@ -1,0 +1,208 @@
+<Activity mc:Ignorable="sap sap2010"
+          x:Class="Main"
+          VisualBasic.Settings="{x:Null}"
+          sap2010:WorkflowViewState.IdRef="ActivityBuilder_1"
+          xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:s="clr-namespace:System;assembly=System.Private.CoreLib"
+          xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+          xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+          xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib"
+          xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=System.Private.CoreLib"
+          xmlns:sd="clr-namespace:System.Data;assembly=System.Data.Common"
+          xmlns:ss="clr-namespace:System.Security;assembly=System.Private.CoreLib"
+          xmlns:ui="http://schemas.uipath.com/workflow/activities"
+          xmlns:uix="http://schemas.uipath.com/workflow/activities/uix"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Sequence DisplayName="Main Dispatcher Sequence"
+            sap:VirtualizedContainerService.HintSize="1020.8,3995.2"
+            sap2010:WorkflowViewState.IdRef="Sequence_1">
+
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Name="username" />
+      <Variable x:TypeArguments="ss:SecureString" Name="password" />
+      <Variable x:TypeArguments="sd:DataTable" Name="dt_WorkItems" />
+      <Variable x:TypeArguments="sd:DataTable" Name="dt_WI4" />
+    </Sequence.Variables>
+
+    <ui:GetRobotCredential DisplayName="Get Credential"
+                           AssetName="RPA_Credential"
+                           FolderPath="Default"
+                           Username="[username]"
+                           Password="[password]"
+                           CacheStrategy="None" />
+
+    <TryCatch DisplayName="Try Catch Dispatcher">
+
+      <TryCatch.Try>
+        <uix:NApplicationCard DisplayName="Open Browser"
+                              InteractionMode="DebuggerApi"
+                              ScopeGuid="PUBLIC-SAFE-SCOPE-GUID">
+
+          <uix:NApplicationCard.TargetApp>
+            <uix:TargetApp BrowserType="Chrome"
+                           Url="https://example-system-url"
+                           Selector="&lt;html app='chrome.exe' title='Example System - Work Items' /&gt;"
+                           Version="V2" />
+          </uix:NApplicationCard.TargetApp>
+
+          <uix:NApplicationCard.Body>
+            <ActivityAction x:TypeArguments="x:Object">
+              <ActivityAction.Argument>
+                <DelegateInArgument x:TypeArguments="x:Object" Name="BrowserSession" />
+              </ActivityAction.Argument>
+
+              <Sequence DisplayName="Dispatcher Logic">
+
+                <uix:NTypeInto DisplayName="Type Username"
+                               Text="[username]"
+                               EmptyFieldMode="SingleLine"
+                               Version="V5">
+                  <uix:NTypeInto.Target>
+                    <uix:TargetAnchorable BrowserURL="https://example-system-url/login"
+                                          ScopeSelectorArgument="&lt;html app='chrome.exe' title='Example System - Log In' /&gt;" />
+                  </uix:NTypeInto.Target>
+                </uix:NTypeInto>
+
+                <uix:NTypeInto DisplayName="Type Password"
+                               SecureText="[password]"
+                               IsPassword="True"
+                               EmptyFieldMode="SingleLine"
+                               Version="V5">
+                  <uix:NTypeInto.Target>
+                    <uix:TargetAnchorable BrowserURL="https://example-system-url/login"
+                                          ScopeSelectorArgument="&lt;html app='chrome.exe' title='Example System - Log In' /&gt;" />
+                  </uix:NTypeInto.Target>
+                </uix:NTypeInto>
+
+                <uix:NClick DisplayName="Click Login"
+                            Version="V5">
+                  <uix:NClick.Target>
+                    <uix:TargetAnchorable BrowserURL="https://example-system-url/login"
+                                          ScopeSelectorArgument="&lt;html app='chrome.exe' title='Example System - Log In' /&gt;" />
+                  </uix:NClick.Target>
+                </uix:NClick>
+
+                <uix:NCheckState DisplayName="Check Login Result"
+                                 Timeout="5"
+                                 Version="V5">
+                  <uix:NCheckState.IfExists>
+                    <Sequence DisplayName="Login OK">
+                      <ui:LogMessage DisplayName="Log Message"
+                                     Level="Info"
+                                     Message="[&quot;Login successful.&quot;]" />
+                    </Sequence>
+                  </uix:NCheckState.IfExists>
+
+                  <uix:NCheckState.IfNotExists>
+                    <Sequence DisplayName="Login Failed">
+                      <ui:LogMessage DisplayName="Log Message"
+                                     Level="Error"
+                                     Message="[&quot;Login failed or invalid credentials.&quot;]" />
+                    </Sequence>
+                  </uix:NCheckState.IfNotExists>
+
+                  <uix:NCheckState.Target>
+                    <uix:TargetAnchorable BrowserURL="https://example-system-url"
+                                          ScopeSelectorArgument="&lt;html app='chrome.exe' title='Example System - Dashboard' /&gt;" />
+                  </uix:NCheckState.Target>
+                </uix:NCheckState>
+
+                <uix:NClick DisplayName="Open Work Items"
+                            Version="V5">
+                  <uix:NClick.Target>
+                    <uix:TargetAnchorable BrowserURL="https://example-system-url"
+                                          ScopeSelectorArgument="&lt;html app='chrome.exe' title='Example System - Dashboard' /&gt;" />
+                  </uix:NClick.Target>
+                </uix:NClick>
+
+                <uix:NExtractData DisplayName="Extract Work Items Table"
+                                  DataTable="[dt_WorkItems]"
+                                  InteractionMode="Simulate"
+                                  Version="V5">
+                  <uix:NExtractData.Target>
+                    <uix:TargetAnchorable BrowserURL="https://example-system-url/work-items"
+                                          ScopeSelectorArgument="&lt;html app='chrome.exe' title='Example System - Work Items' /&gt;" />
+                  </uix:NExtractData.Target>
+                </uix:NExtractData>
+
+                <ui:LogMessage DisplayName="Log Total Rows"
+                               Message="[&quot;Total rows extracted: &quot; &amp; dt_WorkItems.Rows.Count.ToString]" />
+
+                <Assign DisplayName="Filter WI4 Rows">
+                  <Assign.To>
+                    <OutArgument x:TypeArguments="sd:DataTable">[dt_WI4]</OutArgument>
+                  </Assign.To>
+                  <Assign.Value>
+                    <InArgument x:TypeArguments="sd:DataTable">
+                      [dt_WorkItems.AsEnumerable().
+                        Where(Function(row) row("Type").ToString.Trim = "WI4").
+                        CopyToDataTable()]
+                    </InArgument>
+                  </Assign.Value>
+                </Assign>
+
+                <ui:LogMessage DisplayName="Log WI4 Rows"
+                               Message="[&quot;WI4 rows found: &quot; &amp; dt_WI4.Rows.Count.ToString]" />
+
+                <ui:ForEachRow DataTable="[dt_WI4]"
+                               DisplayName="For Each WI4 Row">
+                  <ui:ForEachRow.Body>
+                    <ActivityAction x:TypeArguments="sd:DataRow">
+                      <ActivityAction.Argument>
+                        <DelegateInArgument x:TypeArguments="sd:DataRow" Name="row" />
+                      </ActivityAction.Argument>
+
+                      <Sequence DisplayName="Queue Upload Body">
+                        <ui:AddQueueItem DisplayName="Add Queue Item"
+                                         QueueType="DispatcherQueue"
+                                         FolderPath="Default"
+                                         Priority="Normal">
+                          <ui:AddQueueItem.ItemInformation>
+                            <InArgument x:TypeArguments="x:String" x:Key="WIID">[row("WIID").ToString]</InArgument>
+                            <InArgument x:TypeArguments="x:String" x:Key="Type">[row("Type").ToString]</InArgument>
+                            <InArgument x:TypeArguments="x:String" x:Key="Status">[row("Status").ToString]</InArgument>
+                            <InArgument x:TypeArguments="x:String" x:Key="Date">[row("Date").ToString]</InArgument>
+                          </ui:AddQueueItem.ItemInformation>
+                        </ui:AddQueueItem>
+
+                        <ui:LogMessage DisplayName="Log Queue Insert"
+                                       Message="[&quot;Uploading WIID to queue: &quot; &amp; row(&quot;WIID&quot;).ToString]" />
+                      </Sequence>
+                    </ActivityAction>
+                  </ui:ForEachRow.Body>
+                </ui:ForEachRow>
+
+                <uix:NClick DisplayName="Log Out"
+                            Version="V5">
+                  <uix:NClick.Target>
+                    <uix:TargetAnchorable BrowserURL="https://example-system-url/work-items"
+                                          ScopeSelectorArgument="&lt;html app='chrome.exe' title='Example System - Work Items' /&gt;" />
+                  </uix:NClick.Target>
+                </uix:NClick>
+
+              </Sequence>
+            </ActivityAction>
+          </uix:NApplicationCard.Body>
+        </uix:NApplicationCard>
+      </TryCatch.Try>
+
+      <TryCatch.Catches>
+        <Catch x:TypeArguments="s:Exception">
+          <ActivityAction x:TypeArguments="s:Exception">
+            <ActivityAction.Argument>
+              <DelegateInArgument x:TypeArguments="s:Exception" Name="exception" />
+            </ActivityAction.Argument>
+            <Sequence DisplayName="Handle Dispatcher Exception">
+              <ui:LogMessage DisplayName="Log Error"
+                             Level="Error"
+                             Message="[&quot;Dispatcher error encountered: &quot; + exception.Message]" />
+            </Sequence>
+          </ActivityAction>
+        </Catch>
+      </TryCatch.Catches>
+
+    </TryCatch>
+  </Sequence>
+</Activity>
